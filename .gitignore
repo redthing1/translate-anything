@@ -1,0 +1,17 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/translate-anything
+translate-anything.so
+translate-anything.dylib
+translate-anything.dll
+translate-anything.a
+translate-anything.lib
+translate-anything-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
+*.a
