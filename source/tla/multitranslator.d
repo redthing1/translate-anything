@@ -52,6 +52,9 @@ class MultiTranslator {
     }
 
     void unload_all() {
+        foreach (gen; translation_generators) {
+            gen.destroy();
+        }
         translation_generators.clear();
     }
 
@@ -110,6 +113,11 @@ class MultiTranslator {
             output_texts ~= translation_output;
         }
         log.trace("translated (%s -> %s): %s -> %s", source_language, target_language, texts, output_texts);
+
+        // if in on-demand mode, destroy the generator
+        if (!keep_all_loaded) {
+            gen.destroy();
+        }
 
         return some(output_texts);
     }
