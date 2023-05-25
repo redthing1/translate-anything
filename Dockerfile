@@ -22,7 +22,7 @@ COPY . /src
 # build
 RUN cd /src \
     && . ${DPATH}/${D_VERSION}/activate \
-    && dub build -b release-debug
+    && dub build -b debug
 
 FROM debian:bookworm-slim AS run
 
