@@ -42,4 +42,4 @@ ENV LD_LIBRARY_PATH=/app
 ENV PATH=/app:$PATH
 
 # run
-CMD ["/app/translate-anything", "-c", "/app/config.toml"]
+CMD ["/app/translate-anything", "-v", "-c", "/app/config.toml"]
