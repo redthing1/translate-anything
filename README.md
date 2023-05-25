@@ -5,8 +5,25 @@ translate anything! a server for native inference of opus-mt models
 
 ## usage
 
+build image:
 ```sh
-TODO
+podman build --rm . -t "redthing1/translate-anything"
+```
+
+add configuration in `config.toml`:
+```toml
+[server]
+port = 7430
+
+[[translators]]
+lang1 = "en"
+lang2 = "ru"
+path = "/models/ct2-opus-mt-en-ru-f32"
+```
+
+run container:
+```sh
+podman run --rm -it -p 7430:7430 -v $(pwd)/config.toml:/config.toml -v $(pwd)/models:/models redthing1/translate-anything
 ```
 
 ## models
