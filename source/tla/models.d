@@ -3,6 +3,7 @@ module tla.models;
 struct ServerConfig {
     string host = "0.0.0.0";
     long port = 7430;
+    string api_token = null;
 }
 
 struct TranslatorConfig {

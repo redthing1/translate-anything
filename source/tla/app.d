@@ -39,6 +39,8 @@ void main(string[] args) {
 	log.meta_timestamp = false;
 	log.source = "tla";
 
+	app_context.logger = log;
+
 	if (!std.file.exists(a.option("configfile"))) {
 		writeln("config file does not exist");
 		return;
@@ -48,6 +50,8 @@ void main(string[] args) {
 
 	auto server_config = TomlConfigHelper.bind!ServerConfig(config_doc, "server");
 	auto opt_config = TomlConfigHelper.bind!OptConfig(config_doc, "opt");
+
+	app_context.api_token = server_config.api_token;
 
 	if (opt_config.low_memory_mode) {
 		log.warn(
@@ -74,6 +78,7 @@ void main(string[] args) {
 	auto multi_translator = new MultiTranslator(log, !opt_config.low_memory_mode);
 	multi_translator.register_translators(translator_configs);
 	multi_translator.load_all_translators();
+	app_context.multi_translator = multi_translator;
 
 	log.info("starting server on %s:%s", server_config.host, server_config.port);
 
@@ -82,7 +87,6 @@ void main(string[] args) {
 	settings.port = cast(ushort) server_config.port;
 
 	auto vib = Vibrant(settings);
-	app_context = AppContext(log, multi_translator);
 	vibrant_web(vib);
 
 	// listenHTTP is called automatically
