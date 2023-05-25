@@ -12,5 +12,5 @@ struct TranslatorConfig {
 }
 
 struct OptConfig {
-    bool keep_all_loaded = true;
+    bool low_memory_mode = false;
 }

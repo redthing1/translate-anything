@@ -49,10 +49,11 @@ void main(string[] args) {
 	auto server_config = TomlConfigHelper.bind!ServerConfig(config_doc, "server");
 	auto opt_config = TomlConfigHelper.bind!OptConfig(config_doc, "opt");
 
-	if (!opt_config.keep_all_loaded) {
+	if (opt_config.low_memory_mode) {
 		log.warn(
-			"keep_all_loaded is disabled. "
-				~ "this will incur additional delay of loading models for every request.");
+			"low_memory_mode is enabled. "
+				~ "models will be loaded to serve requests then unloaded. "
+				~ "however, this will incur the load overhead every request.");
 	}
 
 	if ("translators" !in config_doc) {
@@ -70,7 +71,7 @@ void main(string[] args) {
 
 	log.info("configured translators: %s", translator_configs);
 
-	auto multi_translator = new MultiTranslator(log, opt_config.keep_all_loaded);
+	auto multi_translator = new MultiTranslator(log, !opt_config.low_memory_mode);
 	multi_translator.register_translators(translator_configs);
 	multi_translator.load_all_translators();
 
