@@ -36,6 +36,7 @@ class MultiTranslator {
     }
 
     Optional!string translate(string text, string source_language, string target_language) {
+        text = text.trim();
         log.trace("translating from %s -> %s: %s", source_language, target_language, text);
         auto slug = source_language ~ "-" ~ target_language;
         if (slug !in translation_generators) {
@@ -51,7 +52,7 @@ class MultiTranslator {
 
         // log.trace("generating translation with params: %s", gen_params);
 
-        auto translation_output = gen.generate(text, gen_params).replace("▁", " ");
+        auto translation_output = gen.generate(text, gen_params).replace("▁", " ").trim();
 
         log.trace("translated (%s -> %s): %s -> %s", source_language, target_language, text, translation_output);
 
