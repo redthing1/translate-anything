@@ -3,111 +3,45 @@ module tla.web;
 import std.stdio;
 import std.typecons;
 import std.json;
+
 import vibe.d;
 import vibrant.d;
 import mir.ser.json : serializeJson;
+import minlog;
+import typetips;
 
-struct Book {
-    string id;
-}
-
-struct Bookshelf {
-    static Book[] all = [Book("apple"), Book("banana"), Book("cherry")];
-
-    static Nullable!Book find(string id) {
-        foreach (book; all) {
-            if (book.id == id) {
-                return Nullable!Book(book);
-            }
-        }
-        return Nullable!Book.init;
-    }
-
-    static bool destroy(string id) {
-        foreach (i, book; all) {
-            if (book.id == id) {
-                all = all[0 .. i] ~ all[i + 1 .. $];
-                return true;
-            }
-        }
-        return false;
-    }
-}
-
-class BookController {
-    mixin Routes;
-
-    // GET /book
-    void index() {
-        auto books = Bookshelf.all;
-
-        render!JSON = books.serializeJson;
-    }
-
-    // GET /book/:id
-    void show() {
-        auto id = params["id"].as!string;
-        auto book = Bookshelf.find(id);
-
-        render!JSON = book.serializeJson;
-    }
-
-    // DELETE /book/:id
-    void destroy() {
-        auto id = params["id"].as!string;
-
-        if (Bookshelf.destroy(id)) {
-            render!EMPTY = 201;
-        } else {
-            render!EMPTY = 404;
-        }
-    }
-}
+import tla.multitranslator;
+import tla.global;
 
 void vibrant_web(T)(T vib) {
     with (vib) {
-        // static files from wwwroot
-        router.get("*", serveStaticFiles("./wwwroot"));
-        // router.get("/static/*", serveStaticFiles("./wwwroot", new HTTPFileServerSettings("/static")));
+        with (Scope("/v1")) {
+            // POST /v1/translate/{src_lang}/{tgt_lang}
+            Post("/translate/:src_lang/:tgt_lang", "application/json", (scope req, scope res) {
+                auto source_lang = req.params["src_lang"];
+                auto target_lang = req.params["tgt_lang"];
+                if ("text" !in req.json) {
+                    // res.status = HTTPStatus.badRequest;
+                    // return "missing 'text' field in request";
+                    return format(`{"error": "missing 'text' field in request"}`);
+                }
+                auto request_text = req.json["text"].get!string;
 
-        Get("/hello", (req, res) => "Hello World!");
+                auto maybe_translated_text = app_context.multi_translator.translate(request_text, source_lang, target_lang);
+                if (!maybe_translated_text.has) {
+                    // res.status = HTTPStatus.badRequest;
+                    // return "unable to translate language pair";
+                    return format(`{"error": "unable to translate language pair"}`);
+                }
+                auto translated_text = maybe_translated_text.get;
 
-        Before("/hello/:name", (req, res) {
-            if (req.params["name"] == "Jack") {
-                halt("Don't come back.");
-            }
-        });
+                struct TranslationResponse {
+                    string text;
+                }
 
-        Get("/hello/:name", (req, res) =>
-                "Hello " ~ req.params["name"]
-        );
-
-        Catch(Exception.classinfo, (ex, req, res) {
-            res.statusCode = 500;
-            res.writeBody(ex.msg);
-        });
-
-        Get("/oops", (req, res) { throw new Exception("Whoops!"); });
-
-        Get!Json("/hello2/:name", "application/json",
-            (req, res) =>
-                Json([
-                        "greeting": Json("Hello " ~ req.params["name"])
-                    ]),
-                (json) =>
-                json.toPrettyString
-        );
-
-        with (Scope("/api")) {
-            // Path : /api/hello
-            Get("/hello", (req, res) => "Hello developer!");
-
-            with (Scope("/admin")) {
-                // Path : /api/admin/hello
-                Get("/hello", (req, res) => "Hello admin!");
-            }
+                auto resp = serializeJson(TranslationResponse(translated_text));
+                return resp.serializeJson;
+            });
         }
-
-        Resource!BookController;
     }
 }

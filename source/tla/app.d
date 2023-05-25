@@ -14,6 +14,7 @@ import minlog;
 
 import tla.models;
 import tla.web;
+import tla.global;
 import tla.multitranslator;
 
 enum APP_VERSION = "v0.1.0";
@@ -68,9 +69,8 @@ void main(string[] args) {
 	log.info("configured translators: %s", translator_configs);
 
 	// load translators one by one
-	auto multi_translator = new MultiTranslator();
+	auto multi_translator = new MultiTranslator(log);
 	foreach (translator_config; translator_configs) {
-		log.info("loading translator %s", translator_config);
 		multi_translator.load(translator_config);
 	}
 
@@ -81,6 +81,7 @@ void main(string[] args) {
 	settings.port = cast(ushort) server_port;
 
 	auto vib = Vibrant(settings);
+	app_context = AppContext(log, multi_translator);
 	vibrant_web(vib);
 
 	// listenHTTP is called automatically
