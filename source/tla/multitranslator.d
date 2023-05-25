@@ -3,7 +3,7 @@ module tla.multitranslator;
 import std.stdio;
 import std.string;
 import std.array;
-import std.exception: enforce;
+import std.exception : enforce;
 
 import minlog;
 import typetips;
@@ -91,25 +91,26 @@ class MultiTranslator {
         return translation_generators[slug];
     }
 
-    Optional!string translate(string text, string source_language, string target_language) {
-        text = text.strip();
+    Optional!(string[]) translate_batch(string[] texts, string source_language, string target_language) {
         auto maybe_gen = get_translator_for(source_language, target_language);
         if (maybe_gen is null)
-            return no!string;
+            return no!(string[]);
         auto gen = maybe_gen;
-
-        log.trace("translating from %s -> %s: %s", source_language, target_language, text);
 
         auto gen_params = gen.default_gen_params;
         gen_params.beam_size = 6;
         gen_params.sampling_topk = 1;
 
-        // log.trace("generating translation with params: %s", gen_params);
+        log.trace("translating from %s -> %s: %s", source_language, target_language, texts);
+        string[] output_texts;
+        foreach (text; texts) {
+            text = text.strip();
 
-        auto translation_output = gen.generate(text, gen_params).replace("▁", " ").strip();
+            auto translation_output = gen.generate(text, gen_params).replace("▁", " ").strip();
+            output_texts ~= translation_output;
+        }
+        log.trace("translated (%s -> %s): %s -> %s", source_language, target_language, texts, output_texts);
 
-        log.trace("translated (%s -> %s): %s -> %s", source_language, target_language, text, translation_output);
-
-        return some(translation_output);
+        return some(output_texts);
     }
 }
