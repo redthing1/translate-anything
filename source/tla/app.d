@@ -16,6 +16,7 @@ import tla.models;
 import tla.web;
 import tla.global;
 import tla.multitranslator;
+import tla.util;
 
 enum APP_VERSION = "v0.1.0";
 
@@ -45,23 +46,13 @@ void main(string[] args) {
 
 	auto config_doc = parseTOML(std.file.readText(a.option("configfile")));
 
-	if ("server" !in config_doc) {
-		writeln("configuration is missing [server] section");
-		return;
-	}
-	auto server_table = config_doc["server"];
-	auto server_host = server_table["host"].str;
-	auto server_port = server_table["port"].integer;
+	auto server_config = TomlConfigHelper.bind!ServerConfig(config_doc, "server");
+	auto opt_config = TomlConfigHelper.bind!OptConfig(config_doc, "opt");
 
-	bool keep_all_loaded = true;
-	if ("opt" in config_doc) {
-		auto opt_table = config_doc["opt"];
-		keep_all_loaded = opt_table["keep_all_loaded"].boolean;
-
-		if (!keep_all_loaded) {
-			log.warn("keep_all_loaded is disabled. "
-					~ "this will incur additional delay of loading models for every request.");
-		}
+	if (!opt_config.keep_all_loaded) {
+		log.warn(
+			"keep_all_loaded is disabled. "
+				~ "this will incur additional delay of loading models for every request.");
 	}
 
 	if ("translators" !in config_doc) {
@@ -79,15 +70,15 @@ void main(string[] args) {
 
 	log.info("configured translators: %s", translator_configs);
 
-	auto multi_translator = new MultiTranslator(log, keep_all_loaded);
+	auto multi_translator = new MultiTranslator(log, opt_config.keep_all_loaded);
 	multi_translator.register_translators(translator_configs);
 	multi_translator.load_all_translators();
 
-	log.info("starting server on %s:%s", server_host, server_port);
+	log.info("starting server on %s:%s", server_config.host, server_config.port);
 
 	auto settings = new HTTPServerSettings;
-	settings.hostName = server_host;
-	settings.port = cast(ushort) server_port;
+	settings.hostName = server_config.host;
+	settings.port = cast(ushort) server_config.port;
 
 	auto vib = Vibrant(settings);
 	app_context = AppContext(log, multi_translator);
