@@ -86,7 +86,8 @@ void main(string[] args) {
 	vibrant_web(vib);
 
 	// listenHTTP is called automatically
-	runApplication();
+	string[] extra_args;
+	runApplication(&extra_args);
 
 	scope (exit)
 		vib.Stop();
