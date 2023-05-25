@@ -16,3 +16,4 @@ translate-anything-test-*
 *.lst
 *.a
 *.so.*
+config.toml
