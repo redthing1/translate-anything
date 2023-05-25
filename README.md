@@ -26,6 +26,22 @@ run container:
 podman run --rm -it -p 7430:7430 -v $(pwd)/config.toml:/config.toml -v $(pwd)/models:/models redthing1/translate-anything
 ```
 
+or better, compose:
+```yaml
+version: "3.8"
+
+services:
+  translate_anything:
+    image: redthing1/translate-anything
+    ports:
+      - "7430:7430"
+    volumes:
+      - ./config.toml:/config.toml
+      - ./models:/models
+```
+
+then `podman-compose up -d`.
+
 ## models
 
 this project supports models based on the [Opus-MT](https://github.com/Helsinki-NLP/Opus-MT) architecture.
