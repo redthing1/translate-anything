@@ -4,15 +4,14 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y \
     bash \
     curl wget xz-utils \
-    gcc make libc6-dev libcurl4 \
+    build-essential make libc6-dev libcurl4 \
     git libxml2 \
     && rm -rf /var/lib/apt/lists/* && apt autoremove -y && apt clean
 
 # stuff for native inference (ctranslate2 and sentencepiece)
 RUN apt-get update && apt-get install -y \
-    libopenblas-dev \
+    libopenblas-dev cmake liblapack-dev libz-dev libssl-dev libcrypto++-dev libatlas-base-dev \
     && rm -rf /var/lib/apt/lists/* && apt autoremove -y && apt clean
-
 
 # install dlang
 RUN curl -fsS https://dlang.org/install.sh | bash -s install ldc-1.30.0 \
