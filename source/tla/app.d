@@ -74,13 +74,6 @@ void main(string[] args) {
 		multi_translator.load(translator_config);
 	}
 
-	// // test stub translation
-	// import flant5;
-	// auto gen = FlanT5Generator();
-	// gen.load_model("/home/salt/Downloads/lang/ct2-opus-mt-en-ru-f32");
-	// auto test_translation = gen.generate("hello, world");
-	// writefln("test translation: %s", test_translation);
-
 	log.info("starting server on %s:%s", server_host, server_port);
 
 	auto settings = new HTTPServerSettings;
