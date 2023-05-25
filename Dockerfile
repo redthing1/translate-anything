@@ -30,7 +30,7 @@ FROM debian:bookworm-slim AS run
 RUN apt-get update && apt-get install -y \
     bash libc6-dev libcurl4 \
     git libxml2 \
-    libopenblas liblapack libz libssl libcrypto++ libatlas-base \
+    libopenblas-dev liblapack-dev libz-dev libssl-dev libcrypto++-dev libatlas-base-dev libgomp1 \
     && rm -rf /var/lib/apt/lists/* && apt autoremove -y && apt clean
 
 # copy built binaries

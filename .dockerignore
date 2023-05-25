@@ -17,3 +17,5 @@ translate-anything-test-*
 *.a
 *.so.*
 config.toml
+
+Dockerfile
