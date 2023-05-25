@@ -23,7 +23,7 @@ path = "/models/ct2-opus-mt-en-ru-f32"
 
 run container:
 ```sh
-podman run --rm -it -p 7430:7430 -v $(pwd)/config.toml:/config.toml -v $(pwd)/models:/models redthing1/translate-anything
+podman run --rm -it -p 7430:7430 -v $(pwd)/config.toml:/app/config.toml -v $(pwd)/models:/models redthing1/translate-anything
 ```
 
 or better, compose:
@@ -36,7 +36,7 @@ services:
     ports:
       - "7430:7430"
     volumes:
-      - ./config.toml:/config.toml
+      - ./config.toml:/app/config.toml
       - ./models:/models
 ```
 
