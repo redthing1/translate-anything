@@ -5,3 +5,7 @@ struct TranslatorConfig {
     string target_language;
     string model_path;
 }
+
+struct OptimizationConfig {
+    
+}

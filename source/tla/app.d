@@ -53,6 +53,17 @@ void main(string[] args) {
 	auto server_host = server_table["host"].str;
 	auto server_port = server_table["port"].integer;
 
+	bool keep_all_loaded = true;
+	if ("opt" in config_doc) {
+		auto opt_table = config_doc["opt"];
+		keep_all_loaded = opt_table["keep_all_loaded"].boolean;
+
+		if (!keep_all_loaded) {
+			log.warn("keep_all_loaded is disabled. "
+					~ "this will incur additional delay of loading models for every request.");
+		}
+	}
+
 	if ("translators" !in config_doc) {
 		writeln("configuration is missing [[translators]] array");
 		return;
@@ -68,11 +79,9 @@ void main(string[] args) {
 
 	log.info("configured translators: %s", translator_configs);
 
-	// load translators one by one
-	auto multi_translator = new MultiTranslator(log);
-	foreach (translator_config; translator_configs) {
-		multi_translator.load(translator_config);
-	}
+	auto multi_translator = new MultiTranslator(log, keep_all_loaded);
+	multi_translator.register_translators(translator_configs);
+	multi_translator.load_all_translators();
 
 	log.info("starting server on %s:%s", server_host, server_port);
 

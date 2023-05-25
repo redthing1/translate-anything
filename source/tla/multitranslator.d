@@ -1,7 +1,9 @@
 module tla.multitranslator;
 
 import std.stdio;
+import std.string;
 import std.array;
+import std.exception: enforce;
 
 import minlog;
 import typetips;
@@ -10,20 +12,42 @@ import flant5;
 import tla.models;
 
 class MultiTranslator {
+    TranslatorConfig[] translator_configs;
     FlanT5Generator*[string] translation_generators;
+    bool keep_all_loaded = true;
 
     minlog.Logger log;
 
-    this(minlog.Logger log) {
+    this(minlog.Logger log, bool keep_all_loaded) {
         this.log = log;
+        this.keep_all_loaded = keep_all_loaded;
     }
 
-    void load(TranslatorConfig translator_config) {
-        auto slug = get_translation_slug(translator_config);
+    void register_translators(TranslatorConfig[] translator_configs) {
+        this.translator_configs = translator_configs;
+    }
+
+    void load_all_translators() {
+        if (!keep_all_loaded) {
+            // we ignore this, because we load on demand
+            return;
+        }
+        foreach (translator_config; translator_configs) {
+            load_and_cache(translator_config);
+        }
+    }
+
+    FlanT5Generator* load_generator(TranslatorConfig translator_config) {
         auto gen = new FlanT5Generator();
+        auto slug = get_translation_slug(translator_config);
         log.info("loading translator for %s from %s", slug, translator_config.model_path);
         gen.load_model(translator_config.model_path);
+        return gen;
+    }
 
+    void load_and_cache(TranslatorConfig translator_config) {
+        auto gen = load_generator(translator_config);
+        auto slug = get_translation_slug(translator_config);
         translation_generators[slug] = gen;
     }
 
@@ -35,16 +59,46 @@ class MultiTranslator {
         return translator_config.source_language ~ "-" ~ translator_config.target_language;
     }
 
-    Optional!string translate(string text, string source_language, string target_language) {
-        text = text.trim();
-        log.trace("translating from %s -> %s: %s", source_language, target_language, text);
+    Optional!TranslatorConfig get_translator_config_for(string source_language, string target_language) {
+        foreach (translator_config; translator_configs) {
+            if (translator_config.source_language == source_language && translator_config.target_language == target_language) {
+                return some(translator_config);
+            }
+        }
+        return no!TranslatorConfig;
+    }
+
+    FlanT5Generator* get_translator_for(string source_language, string target_language) {
         auto slug = source_language ~ "-" ~ target_language;
         if (slug !in translation_generators) {
-            log.error("translation was requested for unknown language pair %s", slug);
-            return no!string;
+            // check if the translator is registered
+            auto maybe_translator_config = get_translator_config_for(source_language, target_language);
+            if (!maybe_translator_config.has) {
+                log.error("translation was requested for unknown language pair %s", slug);
+                return null;
+            }
+
+            if (!keep_all_loaded) {
+                // if on-demand loading is enabled, load it
+                auto gen = load_generator(maybe_translator_config.get);
+                return gen;
+            } else {
+                enforce(0, "should never have translator config registered "
+                        ~ "but not in cache, when on-demand loading is disabled");
+            }
         }
-        auto gen = translation_generators[slug];
-        log.trace("using translator generator for %s", slug);
+        // it's cached, so just return it
+        return translation_generators[slug];
+    }
+
+    Optional!string translate(string text, string source_language, string target_language) {
+        text = text.strip();
+        auto maybe_gen = get_translator_for(source_language, target_language);
+        if (maybe_gen is null)
+            return no!string;
+        auto gen = maybe_gen;
+
+        log.trace("translating from %s -> %s: %s", source_language, target_language, text);
 
         auto gen_params = gen.default_gen_params;
         gen_params.beam_size = 6;
@@ -52,7 +106,7 @@ class MultiTranslator {
 
         // log.trace("generating translation with params: %s", gen_params);
 
-        auto translation_output = gen.generate(text, gen_params).replace("▁", " ").trim();
+        auto translation_output = gen.generate(text, gen_params).replace("▁", " ").strip();
 
         log.trace("translated (%s -> %s): %s -> %s", source_language, target_language, text, translation_output);
 
