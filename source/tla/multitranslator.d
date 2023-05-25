@@ -49,9 +49,12 @@ class MultiTranslator {
         gen_params.beam_size = 6;
         gen_params.sampling_topk = 1;
 
-        log.trace("generating translation with params: %s", gen_params);
+        // log.trace("generating translation with params: %s", gen_params);
 
         auto translation_output = gen.generate(text, gen_params).replace("▁", " ");
+
+        log.trace("translated (%s -> %s): %s -> %s", source_language, target_language, text, translation_output);
+
         return some(translation_output);
     }
 }
