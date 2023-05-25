@@ -1,5 +1,6 @@
 module tla.multitranslator;
 
+import std.stdio;
 import std.array;
 
 import minlog;
@@ -9,7 +10,7 @@ import flant5;
 import tla.models;
 
 class MultiTranslator {
-    FlanT5Generator[string] translation_generators;
+    FlanT5Generator*[string] translation_generators;
 
     minlog.Logger log;
 
@@ -19,7 +20,7 @@ class MultiTranslator {
 
     void load(TranslatorConfig translator_config) {
         auto slug = get_translation_slug(translator_config);
-        auto gen = FlanT5Generator();
+        auto gen = new FlanT5Generator();
         log.info("loading translator for %s from %s", slug, translator_config.model_path);
         gen.load_model(translator_config.model_path);
 
